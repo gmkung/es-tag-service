@@ -11,8 +11,8 @@ const allowedOrigins = ["https://script.google.com"];
 const corsOptions = {
   origin: function (origin: any, callback: any) {
     // Check if the origin is in the allowed list
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      //|| !origin
+    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+      //
       console.log("Origin ok");
       callback(null, true);
     } else {
