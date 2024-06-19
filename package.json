@@ -1,8 +1,8 @@
 {
-  "name": "galxe-service",
-  "version": "1.0.1",
-  "description": "",
-  "main": "index.js",
+  "name": "es-tag-service",
+  "version": "1.1.0",
+  "description": "A simple service to pull tags from ES (whitelabel) explorers",
+  "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
