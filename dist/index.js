@@ -37,134 +37,25 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const axios_1 = __importDefault(require("axios"));
-const dotenv_1 = __importDefault(require("dotenv"));
 const cheerio = __importStar(require("cheerio"));
 const cors_1 = __importDefault(require("cors"));
-dotenv_1.default.config(); // Load environment variables from .env
 const app = (0, express_1.default)();
 const port = process.env.PORT || 3000;
-app.use((0, cors_1.default)());
+const allowedOrigins = ["https://script.google.com"];
+const corsOptions = {
+    origin: function (origin, callback) {
+        // Check if the origin is in the allowed list
+        if (allowedOrigins.indexOf(origin) !== -1) { //|| !origin 
+            console.log('Origin ok');
+            callback(null, true);
+        }
+        else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
+};
+app.use((0, cors_1.default)(corsOptions));
 app.use(express_1.default.json());
-app.post("/upsertAddress", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { contractAddress } = req.body;
-    if (!contractAddress) {
-        return res.status(400).send("Bad Request: contractAddress is required");
-    }
-    const credId = "415873790728261632"; // Example credential ID
-    const operation = "APPEND"; // Example operation
-    const items = [contractAddress]; // Use the received contractAddress
-    try {
-        const result = yield axios_1.default.post("https://graphigo.prd.galaxy.eco/query", {
-            operationName: "credentialItems",
-            query: `
-          mutation credentialItems($credId: ID!, $operation: Operation!, $items: [String!]!) 
-          { 
-            credentialItems(input: { 
-              credId: $credId, 
-              operation: $operation, 
-              items: $items 
-            }) 
-            { 
-              name 
-            } 
-          }
-        `,
-            variables: {
-                credId: credId,
-                operation: operation,
-                items: items,
-            },
-        }, {
-            headers: {
-                "access-token": process.env.GALXE_ACCESS_TOKEN_c2F6, // Use the environment variable
-            },
-        });
-        if (result.status !== 200) {
-            throw new Error(`HTTP error: ${result.status}`);
-        }
-        else if (result.data.errors && result.data.errors.length > 0) {
-            console.log(result.data.errors);
-            throw new Error("GraphQL error: " + JSON.stringify(result.data.errors));
-        }
-        res.status(200).json(result.data);
-    }
-    catch (error) {
-        if (axios_1.default.isAxiosError(error)) {
-            // Axios-specific error handling
-            res.status(500).json({ error: "Axios Error", details: error.message });
-        }
-        else if (error instanceof Error) {
-            // General error handling
-            res
-                .status(500)
-                .json({ error: "Internal Server Error", details: error.message });
-        }
-        else {
-            // Fallback for unknown error types
-            res.status(500).json({ error: "Unknown Error" });
-        }
-    }
-}));
-app.post("/checkESLabelPresence", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { contractAddress } = req.body;
-    if (!contractAddress) {
-        return res.status(400).send("Bad Request: contractAddress is required");
-    }
-    const credId = "415873790728261632"; // Example credential ID
-    const operation = "APPEND"; // Example operation
-    const items = [contractAddress]; // Use the received contractAddress
-    try {
-        const result = yield axios_1.default.post("https://graphigo.prd.galaxy.eco/query", {
-            operationName: "credentialItems",
-            query: `
-          mutation credentialItems($credId: ID!, $operation: Operation!, $items: [String!]!) 
-          { 
-            credentialItems(input: { 
-              credId: $credId, 
-              operation: $operation, 
-              items: $items 
-            }) 
-            { 
-              name 
-            } 
-          }
-        `,
-            variables: {
-                credId: credId,
-                operation: operation,
-                items: items,
-            },
-        }, {
-            headers: {
-                "access-token": process.env.GALXE_ACCESS_TOKEN_c2F6, // Use the environment variable
-            },
-        });
-        if (result.status !== 200) {
-            throw new Error(`HTTP error: ${result.status}`);
-        }
-        else if (result.data.errors && result.data.errors.length > 0) {
-            console.log(result.data.errors);
-            throw new Error("GraphQL error: " + JSON.stringify(result.data.errors));
-        }
-        res.status(200).json(result.data);
-    }
-    catch (error) {
-        if (axios_1.default.isAxiosError(error)) {
-            // Axios-specific error handling
-            res.status(500).json({ error: "Axios Error", details: error.message });
-        }
-        else if (error instanceof Error) {
-            // General error handling
-            res
-                .status(500)
-                .json({ error: "Internal Server Error", details: error.message });
-        }
-        else {
-            // Fallback for unknown error types
-            res.status(500).json({ error: "Unknown Error" });
-        }
-    }
-}));
 //To be triggered and used exclusively by Etherscan's team
 app.get("/returnExplorerTag", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const url = req.query.url;
@@ -172,7 +63,6 @@ app.get("/returnExplorerTag", (req, res) => __awaiter(void 0, void 0, void 0, fu
     if (!url || !elementSelector) {
         return res.status(400).json({ error: "Missing url or selector parameter" });
     }
-    console.log(url);
     try {
         // Fetch the web page
         const { data } = yield axios_1.default.get(url);
@@ -181,7 +71,7 @@ app.get("/returnExplorerTag", (req, res) => __awaiter(void 0, void 0, void 0, fu
         // Find and extract the contents of the specified element
         const elementContent = $(elementSelector).text().trim();
         // Return the extracted content
-        res.json({ content: elementContent });
+        res.json({ tag: elementContent });
     }
     catch (error) {
         console.error("Error fetching the web page:", error);
